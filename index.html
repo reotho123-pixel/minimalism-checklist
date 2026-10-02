@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#faf8f5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="极简清单">
+<title>极简清单 · 物品与目标</title>
+<style>
+:root{
+  --bg:#faf8f5;--card:#ffffff;--ink:#2e2a25;--sub:#8d8578;--line:#ece5da;
+  --accent:#c2603e;--accent-soft:#f9ece6;--gold:#b98a2e;--gold-soft:#f7f0df;--ok:#6f8f5c;
+  --radius:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:15px;line-height:1.55}
+.wrap{max-width:600px;margin:0 auto;padding:0 14px calc(40px + env(safe-area-inset-bottom))}
+header{padding:20px 4px 6px}
+h1{font-size:21px;margin:0;font-weight:700;letter-spacing:.5px}
+.stats{color:var(--sub);font-size:13px;margin-top:3px}
+.hint-line{font-size:12.5px;color:var(--sub);margin:2px 4px 8px}
+.tabs{display:flex;gap:6px;position:sticky;top:0;background:var(--bg);padding:10px 0 8px;z-index:5}
+.tabs button{flex:1;border:1px solid var(--line);background:var(--card);padding:9px 0;border-radius:999px;font-size:14px;color:var(--sub);cursor:pointer}
+.tabs button.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+main>section{display:none}
+main>section.show{display:block}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 13px;font-size:13px;color:var(--sub);cursor:pointer}
+.chips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.group-h{font-size:13px;color:var(--sub);margin:16px 4px 8px;display:flex;justify-content:space-between}
+.item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 12px 10px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.item[data-status="pending"]{border-left:3px solid var(--accent)}
+.item[data-status="stored"]{border-left:3px solid var(--gold)}
+.item-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.item-name{font-size:15.5px;font-weight:600;background:none;border:none;padding:0;color:var(--ink);text-align:left;cursor:pointer;font-family:inherit}
+.chip{font-size:11px;color:var(--sub);background:#f4f0ea;border-radius:999px;padding:3px 8px;flex:none}
+.item-mid{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:10px 0 8px;flex-wrap:wrap}
+.seg{display:flex}
+.seg button{font-size:12px;padding:4px 9px;border:1px solid var(--line);background:#fff;color:var(--sub);cursor:pointer;font-family:inherit}
+.seg button:first-child{border-radius:8px 0 0 8px}
+.seg button:last-child{border-radius:0 8px 8px 0}
+.seg button+button{border-left:none}
+.seg button.on.f-like{background:var(--gold-soft);border-color:var(--gold);color:var(--gold)}
+.seg button.on.f-neutral{background:#f0ede8;border-color:#c9c2b6;color:#6b655a}
+.seg button.on.f-dislike{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+select[data-act="status"]{border:1px solid var(--line);border-radius:8px;padding:5px 6px;font-size:12.5px;background:#fff;color:var(--ink);max-width:130px;font-family:inherit}
+.item-note{font-size:12.5px;color:var(--sub);background:#faf6f0;border-radius:8px;padding:6px 9px;margin-bottom:8px}
+.item-bottom{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px dashed var(--line);padding-top:9px;flex-wrap:wrap}
+.wear-txt{font-size:12px;color:var(--sub)}
+.btns{display:flex;gap:10px;align-items:center}
+.wear-btn{background:var(--accent-soft);color:var(--accent);border:none;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.del-btn{background:none;border:none;color:var(--sub);font-size:12.5px;cursor:pointer;padding:4px;font-family:inherit}
+.rename{width:100%;border:1px solid var(--accent);border-radius:8px;padding:4px 8px;font-size:15px;font-weight:600;font-family:inherit}
+.empty{color:var(--sub);text-align:center;padding:30px 0;font-size:14px}
+#add-form{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-top:16px}
+#add-name{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;font-size:14px;margin-bottom:8px;font-family:inherit}
+.add-row{display:flex;gap:8px}
+.add-row select{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13.5px;background:#fff;font-family:inherit}
+.add-row button{flex:none;background:var(--ink);color:#fff;border:none;border-radius:10px;padding:0 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.bar{height:8px;background:#efe9e0;border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:999px;transition:width .3s}
+.bar-txt{font-size:13px;color:var(--sub);margin-top:6px}
+.goal{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.check{width:26px;height:26px;border-radius:50%;border:2px solid #d8d0c2;background:#fff;color:#fff;font-size:15px;line-height:1;flex:none;cursor:pointer;padding:0}
+.goal.done .check{background:var(--ok);border-color:var(--ok)}
+.gtitle{font-weight:600;font-size:15px}
+.goal.done .gtitle{text-decoration:line-through;color:var(--sub)}
+.gdesc{font-size:13px;color:var(--sub);margin-top:3px}
+.g-body{flex:1;min-width:0}
+.gtitle,.gdesc{cursor:pointer}
+.goal .del-btn{flex:none}
+#goal-add{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-top:16px}
+#goal-add input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;font-size:14px;margin-bottom:8px;font-family:inherit}
+.add-row input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13.5px;font-family:inherit}
+.note{display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.note:last-child{border-bottom:none}
+.note-date{flex:none;font-size:11.5px;color:var(--sub)}
+.note-text{flex:1;cursor:pointer;word-break:break-all}
+.note .del-btn{flex:none}
+#note-add{margin-top:10px}
+
+/* ===== 数字极简 ===== */
+.seg button.on.f-need{background:#e9f0e4;border-color:var(--ok);color:var(--ok)}
+.seg button.on.f-del{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+button.chip{border:none;cursor:pointer;font-family:inherit}
+.item-title{font-size:15.5px;font-weight:600}
+#app-add,#sub-add,#week-add{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-top:10px}
+#app-add input,#sub-add input,#week-add input{border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);min-width:0}
+#app-name,#sub-name{width:100%;margin-bottom:8px}
+#week-list .item{padding:10px 12px}
+
+/* ===== 金钱记账 ===== */
+.want-days{font-size:12px;font-weight:600;color:var(--sub)}
+.want-days.ok{color:var(--ok)}
+.item[data-mstatus="gaveup"]{border-left:3px solid var(--ok)}
+.item[data-mstatus="bought"]{opacity:.72}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.card h3{margin:0 0 6px;font-size:14.5px}
+.card p.hint{font-size:13px;color:var(--sub);margin:4px 0 8px}
+.card ul{margin:6px 0 0;padding-left:18px;font-size:14px}
+.card li{margin:3px 0}
+.card.danger{border-left:3px solid var(--accent)}
+.card.danger h3{color:var(--accent)}
+.data-btns button{display:block;width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px;margin-bottom:8px;font-size:14px;color:var(--ink);cursor:pointer;font-family:inherit}
+.data-btns button.warn{color:var(--accent);border-color:#eccdbf}
+.toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:rgba(46,42,37,.92);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:50;max-width:80vw}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
+/* ===== 物品图片 ===== */
+.item-main{display:flex;gap:11px;align-items:flex-start}
+.item-thumb{flex:none;width:60px;height:60px;border-radius:11px;border:1px solid var(--line);background:#f4f0ea;overflow:hidden;position:relative;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.item-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.item-thumb .ph{font-size:10.5px;color:var(--sub);text-align:center;line-height:1.25;padding:0 4px}
+.item-thumb::after{content:'';position:absolute;inset:0;border-radius:11px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.03)}
+.item-thumb:active{opacity:.75}
+.item-info{flex:1;min-width:0}
+.photo-btns{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.photo-btn{background:#f4f0ea;color:var(--sub);border:none;border-radius:999px;padding:5px 11px;font-size:12px;cursor:pointer;font-family:inherit}
+.photo-btn.pick{background:var(--gold-soft);color:var(--gold);font-weight:600}
+.photo-btn.rm{background:none;color:var(--accent);padding:5px 7px}
+
+/* 大图预览 */
+.viewer{position:fixed;inset:0;background:rgba(28,25,22,.93);z-index:80;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:22px}
+.viewer.show{display:flex}
+.viewer img{max-width:100%;max-height:76vh;border-radius:12px;object-fit:contain}
+.viewer-name{color:#fff;font-size:14px;opacity:.9;text-align:center}
+.viewer-btns{display:flex;gap:12px}
+.viewer-btns button{border:none;border-radius:999px;padding:9px 20px;font-size:14px;cursor:pointer;font-family:inherit}
+.viewer-btns .v-replace{background:#fff;color:#2e2a25;font-weight:600}
+.viewer-btns .v-del{background:rgba(255,255,255,.16);color:#fff}
+.viewer-btns .v-close{background:var(--accent);color:#fff;font-weight:600}
+
+/* 复盘卡片可编辑 */
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card-h h3{margin:0;font-size:14.5px}
+.card-h .card-tools{display:flex;gap:10px;flex:none}
+.card-tools button{background:none;border:none;color:var(--sub);font-size:12.5px;cursor:pointer;padding:2px;font-family:inherit}
+.card-tools button.rm{color:var(--accent)}
+.ins-add-btn{background:#f4f0ea;border:none;border-radius:999px;padding:6px 13px;font-size:12.5px;color:var(--sub);cursor:pointer;font-family:inherit;margin-top:8px}
+.card ul li{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card ul li .li-del{background:none;border:none;color:var(--sub);font-size:12px;cursor:pointer;padding:2px 4px;flex:none;font-family:inherit}
+.storage-note{font-size:12px;color:var(--sub);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+.bar2{height:6px;background:#efe9e0;border-radius:999px;overflow:hidden;margin-top:5px}
+.bar2 i{display:block;height:100%;background:var(--gold);border-radius:999px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>极简清单</h1>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="items" class="on">物品清单</button>
+    <button data-tab="goals">极简目标</button>
+    <button data-tab="digital">数字极简</button>
+    <button data-tab="money">金钱记账</button>
+    <button data-tab="insight">复盘</button>
+  </nav>
+
+  <main>
+    <section id="tab-items" class="show">
+      <p class="hint-line">点名称可改名 · 点「今天穿了」累计穿着 · 右侧下拉改状态（在用/收纳中/待处理）</p>
+      <div class="chips" id="chips">
+        <button data-f="all" class="on">全部</button>
+        <button data-f="items">日常物品</button>
+        <button data-f="summer">夏装</button>
+        <button data-f="winter">冬装</button>
+        <button data-f="allseason">四季</button>
+        <button data-f="bag">鞋包</button>
+        <button data-f="stored">收纳中</button>
+        <button data-f="pending">待处理</button>
+      </div>
+      <div id="item-list"></div>
+      <form id="add-form">
+        <input id="add-name" placeholder="添加新物品，如：白色短袖" autocomplete="off">
+        <div class="add-row">
+          <select id="add-cat">
+            <option value="items">日常物品</option>
+            <option value="summer">夏装</option>
+            <option value="winter">冬装</option>
+            <option value="allseason">四季</option>
+            <option value="bag">鞋包</option>
+          </select>
+          <select id="add-feel">
+            <option value="neutral">一般</option>
+            <option value="like">喜欢</option>
+            <option value="dislike">不喜欢</option>
+          </select>
+          <button type="submit">添加</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="tab-goals">
+      <p class="hint-line">按你的习惯定制：不舍得用新的、喜欢的留着、不喜欢的反而常穿 —— 目标就是把这三条反过来。点圆圈打卡，点标题或说明可改，和清单一样能加能删。</p>
+      <div id="goal-progress" style="margin-bottom:12px"></div>
+      <div id="goal-list"></div>
+      <form id="goal-add">
+        <input id="goal-title" placeholder="新目标标题，如：睡前不刷购物软件" autocomplete="off">
+        <div class="add-row">
+          <input id="goal-desc" placeholder="补充说明（可不填）" autocomplete="off">
+          <button type="submit">添加目标</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="tab-digital">
+      <p class="hint-line">数字极简=注意力极简。先花 30 分钟清点：设置→通用→iPhone储存空间（App）、设置→Apple ID→订阅（钱）。点名称可改，点「今天开了／最近在用」记录时间，点金额可改。</p>
+      <div class="group-h"><span>App 清单</span><span id="app-count"></span></div>
+      <div id="app-list"></div>
+      <form id="app-add">
+        <input id="app-name" placeholder="App 名称，如：播客" autocomplete="off">
+        <div class="add-row">
+          <select id="app-tag">
+            <option value="meh">一般</option>
+            <option value="need">必需</option>
+            <option value="like">喜欢</option>
+            <option value="del">待删</option>
+          </select>
+          <button type="submit">添加</button>
+        </div>
+      </form>
+      <div class="group-h" style="margin-top:18px"><span>订阅与自动续费</span><span id="sub-total"></span></div>
+      <div id="sub-list"></div>
+      <form id="sub-add">
+        <input id="sub-name" placeholder="订阅名称，如：iCloud 50G" autocomplete="off">
+        <div class="add-row">
+          <input id="sub-amount" type="number" inputmode="decimal" placeholder="金额 ¥" min="0" step="any">
+          <select id="sub-cycle">
+            <option value="month">每月付</option>
+            <option value="year">每年付</option>
+          </select>
+          <button type="submit">添加</button>
+        </div>
+      </form>
+      <div class="group-h" style="margin-top:18px"><span>每周三个数</span><span id="week-count"></span></div>
+      <div id="week-list"></div>
+      <form id="week-add">
+        <div class="add-row">
+          <input id="week-date" type="date">
+          <button type="submit">记录本周</button>
+        </div>
+        <div class="add-row" style="margin-top:8px">
+          <input id="week-screen" type="number" inputmode="decimal" placeholder="屏幕 小时" min="0" step="any">
+          <input id="week-wechat" type="number" inputmode="decimal" placeholder="微信 GB" min="0" step="any">
+          <input id="week-photos" type="number" inputmode="numeric" placeholder="相册 张" min="0">
+        </div>
+      </form>
+      <div class="card" style="margin-top:16px">
+        <h3>增量规则（数字版一进一出）</h3>
+        <ul>
+          <li>装一个新 App，删一个旧 App</li>
+          <li>新 App 7 天没用就删</li>
+          <li>通知白名单只留"人"：电话、短信、微信，其余 App 推送全关</li>
+          <li>照片当天删废片，不攒"回头再整理"</li>
+        </ul>
+        <h3 style="margin-top:12px">季末三问</h3>
+        <ul>
+          <li>这个订阅的钱，买来的使用时长值吗？</li>
+          <li>这个 App 90 天没开，还留着做什么？</li>
+          <li>收藏≠学会：这个季度收藏夹消化了几条、删了几条？</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="tab-money">
+      <p class="hint-line">记账的极简版：不记每一笔流水，只管住"想买"。想买的东西先写进来等 30 天；期满还想要、又过了"会用 100 次"的测试，再买。订阅的钱在「数字极简」里记。</p>
+      <div class="group-h"><span>想买清单 · 30天冷静期</span><span id="money-stats"></span></div>
+      <div id="want-list"></div>
+      <form id="want-add">
+        <input id="want-name" placeholder="想买什么，如：白色卫衣" autocomplete="off">
+        <div class="add-row">
+          <input id="want-price" type="number" inputmode="decimal" placeholder="价格 ¥（可不填）" min="0" step="any">
+          <select id="want-mode">
+            <option value="waiting">加入想买</option>
+            <option value="bought">直接记一笔已买</option>
+          </select>
+          <button type="submit">添加</button>
+        </div>
+      </form>
+      <div class="card" style="margin-top:16px">
+        <h3>金钱三条规则</h3>
+        <ul>
+          <li>想买的先写进来，30 天后还想要再买——写下来就是给冲动降温</li>
+          <li>买前两问：会用 100 次吗？旧的退役了吗（一进一出）？</li>
+          <li>不买"将就款"，省下的钱留给真正喜欢的东西</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="tab-insight">
+      <div id="insight-list"></div>
+      <div class="card">
+        <h3>我的复盘笔记</h3>
+        <p class="hint">上面的统计是自动算的；这里写给你自己：要退役什么、换什么、下季注意什么。点文字可改，可加可删。</p>
+        <div id="notes-list"></div>
+        <form id="note-add">
+          <div class="add-row">
+            <input id="note-text" placeholder="写一条，如：军绿长裤穿坏就退役" autocomplete="off">
+            <button type="submit">添加</button>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h3>数据管理</h3>
+        <p class="hint">数据保存在这台手机的浏览器里，不联网、不上传。换手机或清缓存前，先导出备份（图片也一并导出）。</p>
+        <div class="storage-note" id="storage-note"></div>
+        <div class="data-btns">
+          <button data-data="export">导出备份（JSON 文件）</button>
+          <button data-data="import">导入备份</button>
+          <button data-data="season" class="warn">季末计数清零（开始新一季统计）</button>
+          <button data-data="reset" class="warn">恢复默认清单</button>
+        </div>
+        <input type="file" id="import-file" accept=".json,application/json" style="display:none">
+      </div>
+      <div class="card">
+        <h3>装进手机的小贴士</h3>
+        <ul>
+          <li>浏览器菜单里选「添加到主屏幕」，就能像 App 一样点开。</li>
+          <li>所有勾选和计数自动保存在本机浏览器，不用联网。</li>
+          <li>不要清理这个网页的浏览器数据，清了记录会没；重要节点先导出备份。</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<div class="viewer" id="viewer">
+  <img id="viewer-img" alt="">
+  <div class="viewer-name" id="viewer-name"></div>
+  <div class="viewer-btns">
+    <button class="v-replace" data-v="replace">换一张</button>
+    <button class="v-del" data-v="del">删除图片</button>
+    <button class="v-close" data-v="close">关闭</button>
+  </div>
+</div>
+
+<script>
+const LS_KEY='minimalism-app-v2';
+const CATS=[['items','日常物品'],['summer','夏装'],['winter','冬装'],['allseason','四季'],['bag','鞋包']];
+const CAT_LABEL=Object.fromEntries(CATS);
+const FEEL_LABEL={like:'喜欢',neutral:'一般',dislike:'不喜欢'};
+const STATUS_LABEL={active:'在用',stored:'收纳中',pending:'待处理'};
+const APP_TAG={need:'必需',like:'喜欢',meh:'一般',del:'待删'};
+
+// 复盘页四张自动统计卡（标题/说明可改，条目可手动移除）
+const INSIGHT_DEF={
+  dislike:{title:'不是喜欢，却在常穿',hint:'标着「一般」但穿了多次的，就是下一批换血对象。方案：不提前扔，穿到报废；同时把喜欢的按计划穿起来；报废后按目标「将就不补」换血。'},
+  stored:{title:'收起来，等「重要日子」的',hint:'它们在等一个可能一直不来的日子。挑一件，这周末就穿出门。'},
+  zero:{title:'本季零穿着（自上次清零）',hint:'季末看这里：这些进入下一季观察期，连续两季零穿着就退役。'},
+  pending:{title:'待处理',hint:'想不清楚扔不扔的，先放这里，给它们一个明确的「考虑区」，别让它们混在日常里。'}
+};
+const INSIGHT_KEYS=['dislike','stored','zero','pending'];
+
+const DEFAULT_GOALS=[
+  {id:'g1',title:'启用仪式：新东西 7 天内用起来',desc:'买回来 7 天内必须穿/用第一次。东西的价值在使用里，不在收纳里；"舍不得用"其实是浪费的开始。'},
+  {id:'g2',title:'喜欢的日常化',desc:'每周至少 2 天穿「喜欢」标签的衣服出门，稳定后加到 4 天。重要日子就是今天。'},
+  {id:'g3',title:'将就的不补',desc:'绿色短袖、军绿色长裤这些「一般」的退役后，不买"差不多就行"的替代款，只买穿上会开心的。'},
+  {id:'g4',title:'一进一出',desc:'每新增 1 件物品，就退役 1 件同类旧物，清单总数只减不增。'},
+  {id:'g5',title:'季末复盘',desc:'每季度最后一天打开「复盘」页：零穿着的进观察期，连续两季零穿着就退役；然后点"季末计数清零"。'},
+  {id:'g6',title:'每月一次"重要日"',desc:'每月挑一个普通周末，把收纳里的喜欢的衣服郑重穿出门一次，然后回这里打卡。'},
+  {id:'g7',title:'守住数量红线',desc:'上限参考：短袖含打底 6、长裤 3、外套 2、鞋 2、包箱 3。想超线，先退役再买。'}
+];
+
+function uid(){return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function monthKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fmtDate(s){const p=s.split('-');return (+p[1])+'月'+(+p[2])+'日';}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function daysAgoText(d){
+  if(!d)return '还没记录';
+  const n=Math.round((new Date(todayStr())-new Date(d))/86400000);
+  return '上次 '+fmtDate(d)+' · '+(n<=0?'今天':n===1?'昨天':n+'天前');
+}
+
+function newItem(o){
+  return Object.assign({id:uid(),cat:'summer',feeling:'neutral',status:'active',wear:0,lastWorn:null,note:''},o);
+}
+function newApp(o){
+  return Object.assign({id:uid(),tag:'meh',lastOpened:null,note:''},o);
+}
+function newSub(o){
+  return Object.assign({id:uid(),amount:0,cycle:'month',lastUsed:null,note:''},o);
+}
+function defaults(){
+  return {items:[
+    newItem({name:'卷发棒',cat:'items'}),
+    newItem({name:'充电宝',cat:'items'}),
+    newItem({name:'卡包',cat:'items'}),
+    newItem({name:'手表',cat:'items',feeling:'like'}),
+    newItem({name:'项链',cat:'items',feeling:'like',note:'哥哥送的，很有意义'}),
+    newItem({name:'QCY 无线耳机',cat:'items'}),
+    newItem({name:'徕卡剃须刀',cat:'items',feeling:'like'}),
+    newItem({name:'防晒霜',cat:'items'}),
+    newItem({name:'U 盘 ×2',cat:'items'}),
+    newItem({name:'护照',cat:'items'}),
+    newItem({name:'驾驶证',cat:'items'}),
+    newItem({name:'毕业证明',cat:'items'}),
+    newItem({name:'棕色短袖',cat:'summer',feeling:'like'}),
+    newItem({name:'白色短袖',cat:'summer'}),
+    newItem({name:'绿色短袖',cat:'summer',note:'常穿——退役后换成真正喜欢的'}),
+    newItem({name:'防晒衣',cat:'summer'}),
+    newItem({name:'泳装一套（衣裤帽镜）',cat:'summer'}),
+    newItem({name:'棕色笑脸短袖（冬打底）',cat:'winter'}),
+    newItem({name:'蓝色笑脸短袖（冬打底）',cat:'winter'}),
+    newItem({name:'秋衣秋裤 ①',cat:'winter'}),
+    newItem({name:'秋衣秋裤 ②',cat:'winter'}),
+    newItem({name:'冬天卫衣',cat:'winter'}),
+    newItem({name:'秋冬冲锋衣',cat:'winter'}),
+    newItem({name:'针织帽',cat:'winter'}),
+    newItem({name:'蓝色拼接长裤',cat:'allseason',feeling:'like'}),
+    newItem({name:'蓝色长裤',cat:'allseason'}),
+    newItem({name:'军绿色长裤',cat:'allseason'}),
+    newItem({name:'棕色挎包',cat:'bag',feeling:'like'}),
+    newItem({name:'行李箱',cat:'bag'}),
+    newItem({name:'运动鞋',cat:'bag'}),
+    newItem({name:'耐克鞋',cat:'bag',feeling:'like'})
+  ],goals:DEFAULT_GOALS,goal:{month:monthKey(),checks:{}},notes:[],
+    apps:[newApp({name:'微信',tag:'need'}),newApp({name:'小红书'})],subs:[],weekly:[],wants:[]};
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw){const s=JSON.parse(raw);if(s&&Array.isArray(s.items))return s;}
+  }catch(e){}
+  return defaults();
+}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(state));}catch(e){}}
+function migrate(){
+  state.items.forEach(it=>{it.wear=it.wear||0;it.lastWorn=it.lastWorn||null;it.note=it.note||'';if(!it.id)it.id=uid();if(!('photo' in it))it.photo=null;});
+  if(!Array.isArray(state.goals)||!state.goals.length)state.goals=DEFAULT_GOALS;
+  if(!state.goal||typeof state.goal!=='object')state.goal={month:monthKey(),checks:{}};
+  if(state.goal.month!==monthKey())state.goal={month:monthKey(),checks:{}};
+  if(!Array.isArray(state.notes))state.notes=[];
+  if(!Array.isArray(state.apps))state.apps=[newApp({name:'微信',tag:'need'}),newApp({name:'小红书'})];
+  if(!Array.isArray(state.subs))state.subs=[];
+  if(!Array.isArray(state.weekly))state.weekly=[];
+  if(!Array.isArray(state.wants))state.wants=[];
+  if(!state.insight||typeof state.insight!=='object')state.insight=DEFAULT_INSIGHT();
+  if(!state.insight.titles||typeof state.insight.titles!=='object')state.insight.titles={};
+  if(!state.insight.hints||typeof state.insight.hints!=='object')state.insight.hints={};
+  if(!state.insight.hidden||typeof state.insight.hidden!=='object')state.insight.hidden={};
+  if(!state.insight.extra||typeof state.insight.extra!=='object')state.insight.extra={};
+  INSIGHT_KEYS.forEach(k=>{
+    if(typeof state.insight.titles[k]!=='string')state.insight.titles[k]=INSIGHT_DEF[k].title;
+    if(typeof state.insight.hints[k]!=='string')state.insight.hints[k]=INSIGHT_DEF[k].hint;
+    if(!Array.isArray(state.insight.hidden[k]))state.insight.hidden[k]=[];
+    if(!Array.isArray(state.insight.extra[k]))state.insight.extra[k]=[];
+  });
+}
+function DEFAULT_INSIGHT(){
+  const t={},h={},hid={};
+  INSIGHT_KEYS.forEach(k=>{t[k]=INSIGHT_DEF[k].title;h[k]=INSIGHT_DEF[k].hint;hid[k]=[];});
+  return {titles:t,hints:h,hidden:hid};
+}
+
+let state=load();
+let currentTab='items';
+let currentFilter='all';
+let currentPhotoId=null;   // 当前正在选图的物品 id
+
+const $=s=>document.querySelector(s);
+
+/* ===== 图片：压缩后存本机 ===== */
+const PHOTO_MAX=760;      // 长边最大像素
+const PHOTO_QUALITY=0.72; // JPEG 质量
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const rawUrl=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+        if(!w||!h){URL.revokeObjectURL(rawUrl);reject(new Error('bad image'));return;}
+        const scale=Math.min(1,PHOTO_MAX/Math.max(w,h));
+        const cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+        const cv=document.createElement('canvas');
+        cv.width=cw; cv.height=ch;
+        const ctx=cv.getContext('2d');
+        ctx.fillStyle='#fff'; ctx.fillRect(0,0,cw,ch);
+        ctx.drawImage(img,0,0,cw,ch);
+        URL.revokeObjectURL(rawUrl);
+        resolve(cv.toDataURL('image/jpeg',PHOTO_QUALITY));
+      }catch(e){URL.revokeObjectURL(rawUrl);reject(e);}
+    };
+    img.onerror=()=>{URL.revokeObjectURL(rawUrl);reject(new Error('load fail'));};
+    img.src=rawUrl;
+  });
+}
+function pickPhoto(itemId){
+  currentPhotoId=itemId;
+  let inp=document.getElementById('photo-file');
+  if(!inp){
+    inp=document.createElement('input');
+    inp.type='file'; inp.id='photo-file';
+    inp.accept='image/*'; inp.style.display='none';
+    document.body.appendChild(inp);
+    inp.addEventListener('change',onPhotoChosen);
+  }
+  inp.value='';
+  inp.click();
+}
+async function onPhotoChosen(e){
+  const f=e.target.files&&e.target.files[0];
+  e.target.value='';
+  const id=currentPhotoId;
+  if(!f||!id)return;
+  toast('正在处理图片…');
+  try{
+    const dataUrl=await compressImage(f);
+    const it=state.items.find(x=>x.id===id);
+    if(!it){toast('物品已不存在');return;}
+    const prev=it.photo||null;
+    it.photo=dataUrl;
+    try{
+      save();
+    }catch(err){
+      it.photo=prev;                       // 存不下就回滚，避免状态与存储不一致
+      toast('存不下了：手机存储空间不足，先删掉几张图片再试');
+      return;
+    }
+    closeViewer();
+    renderItems();
+    toast('图片已保存到本机');
+  }catch(err){
+    toast('图片处理失败，换一张试试');
+  }
+}
+function removePhoto(id,needConfirm){
+  const it=state.items.find(x=>x.id===id);
+  if(!it||!it.photo)return;
+  if(needConfirm&&!confirm('删除「'+it.name+'」的图片？'))return;
+  it.photo=null; save(); closeViewer(); renderItems(); toast('图片已删除');
+}
+function openViewer(id){
+  const it=state.items.find(x=>x.id===id);
+  if(!it||!it.photo)return;
+  const v=$('#viewer');
+  $('#viewer-img').src=it.photo;
+  $('#viewer-name').textContent=it.name;
+  v.dataset.id=id;
+  v.classList.add('show');
+}
+function closeViewer(){$('#viewer').classList.remove('show');$('#viewer-img').src='';}
+function fmtBytes(n){
+  if(n<1024)return n+' B';
+  if(n<1024*1024)return (n/1024).toFixed(0)+' KB';
+  return (n/1024/1024).toFixed(1)+' MB';
+}
+function photoStorageInfo(){
+  let bytes=0,n=0;
+  state.items.forEach(it=>{if(it.photo){bytes+=it.photo.length*0.75;n++;}});
+  return {bytes:Math.round(bytes),n};
+}
+
+function updateStats(){
+  const n=state.items.length;
+  const c=v=>state.items.filter(i=>i.status===v).length;
+  $('#stats').textContent='共 '+n+' 件 · 在用 '+c('active')+' · 收纳 '+c('stored')+' · 待处理 '+c('pending');
+}
+function itemsToRender(){
+  return state.items.filter(it=>{
+    switch(currentFilter){
+      case 'all':return true;
+      case 'pending':return it.status==='pending';
+      case 'stored':return it.status==='stored';
+      default:return it.cat===currentFilter;
+    }
+  });
+}
+function itemCard(it){
+  const wearTxt=it.wear>0?('穿了 '+it.wear+' 次'+(it.lastWorn?' · 最近 '+fmtDate(it.lastWorn):'')):'还没记录';
+  const thumb=it.photo
+    ?'<button class="item-thumb" data-act="viewphoto" title="点击看大图"><img src="'+it.photo+'" alt=""></button>'
+    :'<button class="item-thumb" data-act="pickphoto" title="点击添加图片"><span class="ph">＋<br>图片</span></button>';
+  const photoBtns=it.photo
+    ?'<div class="photo-btns"><button class="photo-btn" data-act="pickphoto">换图</button><button class="photo-btn rm" data-act="rmphoto">删除图片</button></div>'
+    :'<div class="photo-btns"><button class="photo-btn pick" data-act="pickphoto">上传图片</button></div>';
+  return '<div class="item" data-id="'+it.id+'" data-status="'+it.status+'">'
+    +'<div class="item-main">'+thumb
+    +'<div class="item-info"><div class="item-top"><button class="item-name" data-act="rename">'+esc(it.name)+'</button><span class="chip">'+(CAT_LABEL[it.cat]||'')+'</span></div>'
+    +photoBtns+'</div></div>'
+    +'<div class="item-mid"><div class="seg">'
+    +['like','neutral','dislike'].map(f=>'<button data-act="feel" data-val="'+f+'" class="'+(it.feeling===f?'on f-'+f:'')+'">'+FEEL_LABEL[f]+'</button>').join('')
+    +'</div><select data-act="status">'
+    +Object.entries(STATUS_LABEL).map(([v,l])=>'<option value="'+v+'"'+(it.status===v?' selected':'')+'>'+l+'</option>').join('')
+    +'</select></div>'
+    +(it.note?'<div class="item-note">'+esc(it.note)+'</div>':'')
+    +'<div class="item-bottom"><span class="wear-txt">'+wearTxt+'</span><span class="btns">'
+    +'<button class="wear-btn" data-act="wear">今天穿了 +1</button>'
+    +'<button class="del-btn" data-act="del">删除</button></span></div></div>';
+}
+function renderItems(){
+  const items=itemsToRender();
+  const list=$('#item-list');
+  if(!items.length){
+    list.innerHTML='<div class="empty">这里还没有物品，用下面的按钮添加。</div>';
+  }else{
+    let html='';
+    for(const [key,label] of CATS){
+      const group=items.filter(i=>i.cat===key);
+      if(!group.length)continue;
+      html+='<div class="group-h"><span>'+label+'</span><span>'+group.length+' 件</span></div>';
+      html+=group.map(itemCard).join('');
+    }
+    list.innerHTML=html;
+  }
+  document.querySelectorAll('#chips button').forEach(b=>b.classList.toggle('on',b.dataset.f===currentFilter));
+  updateStats();
+}
+function renderGoals(){
+  const done=state.goals.filter(g=>state.goal.checks[g.id]).length;
+  $('#goal-progress').innerHTML='<div class="bar"><i style="width:'+(state.goals.length?Math.round(done/state.goals.length*100):0)+'%"></i></div>'
+    +'<div class="bar-txt">本月达成 '+done+' / '+state.goals.length+'（每月 1 日自动重新开始）</div>';
+  $('#goal-list').innerHTML=state.goals.map(g=>
+    '<div class="goal '+(state.goal.checks[g.id]?'done':'')+'" data-id="'+g.id+'">'
+    +'<button class="check" data-act="goal-toggle">'+(state.goal.checks[g.id]?'✓':'')+'</button>'
+    +'<div class="g-body"><div class="gtitle" data-act="goal-rename">'+esc(g.title)+'</div><div class="gdesc" data-act="goal-desc">'+esc(g.desc)+'</div></div>'
+    +'<button class="del-btn" data-act="goal-del">删除</button></div>').join('');
+}
+function insightGroups(){
+  return {
+    dislike:state.items.filter(i=>i.feeling!=='like'&&i.wear>0&&i.status==='active'),
+    stored:state.items.filter(i=>i.status==='stored'),
+    zero:state.items.filter(i=>i.status==='active'&&i.wear===0&&['summer','winter','allseason','bag'].includes(i.cat)),
+    pending:state.items.filter(i=>i.status==='pending')
+  };
+}
+function renderInsight(){
+  const groups=insightGroups();
+  const ins=state.insight;
+  let html='';
+  for(const k of INSIGHT_KEYS){
+    const hidden=ins.hidden[k]||[];
+    const extras=ins.extra[k]||[];
+    const list=(groups[k]||[]).filter(i=>!hidden.includes(i.id));
+    const danger=(k==='dislike')?' danger':'';
+    const liItems=list.map(i=>
+        '<li><span>'+esc(i.name)+(i.feeling==='like'?' ❤':'')+'</span>'
+        +'<button class="li-del" data-act="ins-hide" data-key="'+k+'" data-id="'+i.id+'">移出本组</button></li>'
+      ).join('')
+      +extras.map(x=>
+        '<li><span>'+esc(x.name)+'</span>'
+        +'<button class="li-del" data-act="ins-del-extra" data-key="'+k+'" data-id="'+x.id+'">删除</button></li>'
+      ).join('');
+    const body=list.length||extras.length
+      ? '<ul>'+liItems+'</ul>'
+      : '<ul><li class="empty" style="padding:0;text-align:left;display:block">暂无</li></ul>';
+    const hiddenCount=(hidden.length)?'<p class="hint" style="margin-top:6px">已从本组隐藏 '+hidden.length+' 项，点「重置」恢复</p>':'';
+    const addBtn='<button class="ins-add-btn" data-act="ins-add" data-key="'+k+'">＋ 添加条目</button>';
+    html+='<div class="card'+danger+'" data-key="'+k+'">'
+      +'<div class="card-h"><h3 data-act="ins-title" data-key="'+k+'">'+esc(ins.titles[k])+'</h3>'
+      +'<div class="card-tools">'
+      +'<button data-act="ins-reset" data-key="'+k+'">重置</button>'
+      +'</div></div>'
+      +'<p class="hint" data-act="ins-hint" data-key="'+k+'">'+esc(ins.hints[k])+'</p>'
+      +body+hiddenCount+addBtn+'</div>';
+  }
+  $('#insight-list').innerHTML=html;
+  renderNotes();
+  renderStorageNote();
+}
+function renderStorageNote(){
+  const el=$('#storage-note');
+  if(!el)return;
+  const info=photoStorageInfo();
+  const LIMIT=4.5*1024*1024;   // 参考上限，多数手机约 5MB
+  const pct=Math.min(100,Math.round(info.bytes/LIMIT*100));
+  el.innerHTML='本机已存 '+info.n+' 张图片，约占 '+fmtBytes(info.bytes)
+    +'<div class="bar2"><i style="width:'+pct+'%"></i></div>'
+    +'<div style="margin-top:5px">数据存在这台手机的浏览器里，不联网、不上传。换手机或清缓存前，先导出备份（含图片）。</div>';
+}
+function renderNotes(){
+  const list=$('#notes-list');
+  if(!state.notes.length){list.innerHTML='<div class="empty" style="padding:8px 0;text-align:left">还没有笔记，用下面输入框写第一条。</div>';return;}
+  list.innerHTML=state.notes.map(n=>
+    '<div class="note" data-id="'+n.id+'"><span class="note-date">'+esc(n.date)+'</span><span class="note-text" data-act="note-edit">'+esc(n.text)+'</span><button class="del-btn" data-act="note-del">删除</button></div>').join('');
+}
+function renderCurrent(){
+  if(currentTab==='items')renderItems();
+  else if(currentTab==='goals')renderGoals();
+  else if(currentTab==='digital')renderDigital();
+  else if(currentTab==='money')renderMoney();
+  else renderInsight();
+}
+/* ===== 数字极简：渲染 ===== */
+function renderDigital(){renderApps();renderSubs();renderWeekly();}
+function renderApps(){
+  $('#app-count').textContent=state.apps.length+' 个';
+  const list=$('#app-list');
+  if(!state.apps.length){
+    list.innerHTML='<div class="empty">还没有记录。先去 设置→通用→iPhone储存空间 看一遍，把常用的加进来。</div>';
+    return;
+  }
+  list.innerHTML=state.apps.map(a=>{
+    const stale=a.lastOpened&&(Math.round((new Date(todayStr())-new Date(a.lastOpened))/86400000)>30);
+    return '<div class="item" data-id="'+a.id+'"'+(a.tag==='del'?' data-status="pending"':'')+'>'
+      +'<div class="item-top"><button class="item-name" data-act="app-rename">'+esc(a.name)+'</button><span class="chip">App</span></div>'
+      +'<div class="item-mid"><div class="seg">'
+      +Object.entries(APP_TAG).map(([v,l])=>'<button data-act="app-tag" data-val="'+v+'" class="'+(a.tag===v?'on f-'+v:'')+'">'+l+'</button>').join('')
+      +'</div></div>'
+      +(a.note?'<div class="item-note">'+esc(a.note)+'</div>':'')
+      +'<div class="item-bottom"><span class="wear-txt"'+(stale?' style="color:var(--accent)"':'')+'>'+daysAgoText(a.lastOpened)+'</span><span class="btns">'
+      +'<button class="wear-btn" data-act="app-open">今天开了</button>'
+      +'<button class="del-btn" data-act="app-del">删除</button></span></div></div>';
+  }).join('');
+}
+function renderSubs(){
+  const total=state.subs.reduce((t,s)=>t+(s.cycle==='year'?(s.amount||0)/12:(s.amount||0)),0);
+  $('#sub-total').textContent='每月约 ¥'+(Math.round(total*10)/10);
+  const list=$('#sub-list');
+  if(!state.subs.length){
+    list.innerHTML='<div class="empty">还没有记录。去 设置→Apple ID→订阅 查一遍，看清钱的去向。</div>';
+    return;
+  }
+  list.innerHTML=state.subs.map(s=>
+    '<div class="item" data-id="'+s.id+'">'
+    +'<div class="item-top"><button class="item-name" data-act="sub-rename">'+esc(s.name)+'</button><button class="chip" data-act="sub-amt" title="点击改金额">¥'+(s.amount||0)+(s.cycle==='year'?'/年':'/月')+'</button></div>'
+    +(s.note?'<div class="item-note">'+esc(s.note)+'</div>':'')
+    +'<div class="item-bottom"><span class="wear-txt">'+daysAgoText(s.lastUsed)+'</span><span class="btns">'
+    +'<button class="wear-btn" data-act="sub-used">最近在用</button>'
+    +'<button class="del-btn" data-act="sub-del">删除</button></span></div></div>').join('');
+}
+function renderWeekly(){
+  $('#week-count').textContent='已记 '+state.weekly.length+' 周';
+  const list=$('#week-list');
+  if(!state.weekly.length){
+    list.innerHTML='<div class="empty">每周日记三个数：屏幕时间（设置→屏幕使用时间）、微信存储（微信→我→设置→通用→存储空间）、相册张数。</div>';
+    return;
+  }
+  list.innerHTML=state.weekly.map(w=>
+    '<div class="item" data-id="'+w.id+'">'
+    +'<div class="item-top"><span class="item-title">'+fmtDate(w.date)+'</span><button class="del-btn" data-act="week-del">删除</button></div>'
+    +'<div class="item-note">屏幕 '+w.screen+' 小时 · 微信 '+w.wechat+' GB · 相册 '+w.photos+' 张</div>'
+    +'</div>').join('');
+}
+/* ===== 金钱记账：渲染 ===== */
+function renderMoney(){renderWants();}
+function renderWants(){
+  const waiting=state.wants.filter(w=>w.status==='waiting');
+  const bought=state.wants.filter(w=>w.status==='bought');
+  const gaveup=state.wants.filter(w=>w.status==='gaveup');
+  const mk=monthKey();
+  const monthSpend=bought.filter(w=>(w.decided||'').slice(0,7)===mk).reduce((t,w)=>t+(w.price||0),0);
+  const saved=gaveup.reduce((t,w)=>t+(w.price||0),0);
+  $('#money-stats').textContent='本月已买 ¥'+(Math.round(monthSpend*10)/10)+' · 放弃已省 ¥'+(Math.round(saved*10)/10);
+  const list=$('#want-list');
+  if(!state.wants.length){
+    list.innerHTML='<div class="empty">想买什么，先写在这里等 30 天。多数东西写下来的第三天就不想要了。</div>';
+    return;
+  }
+  const ordered=waiting.concat(bought,gaveup);
+  list.innerHTML=ordered.map(w=>{
+    let mid='',bottom='',statusAttr='';
+    if(w.status==='waiting'){
+      const n=Math.max(0,Math.round((new Date(todayStr())-new Date(w.date))/86400000));
+      const daysTxt=n>=30
+        ?'<span class="want-days ok">冷静期满，可以决定了</span>'
+        :'<span class="want-days">已等 '+n+' 天 · 还剩 '+(30-n)+' 天</span>';
+      mid='<div class="item-mid" style="margin:6px 0 0">'+daysTxt+'</div>';
+      bottom='<div class="item-bottom"><span class="wear-txt">加入于 '+fmtDate(w.date)+'</span><span class="btns">'
+        +'<button class="wear-btn" data-act="want-buy">决定买</button>'
+        +'<button class="photo-btn" data-act="want-giveup">放弃，省钱</button>'
+        +'<button class="del-btn" data-act="want-del">删除</button></span></div>';
+    }else{
+      statusAttr=' data-mstatus="'+w.status+'"';
+      const label=w.status==='bought'?('已买 ¥'+(w.price||0)):('已放弃 · 省 ¥'+(w.price||0));
+      bottom='<div class="item-bottom"><span class="wear-txt">'+label+' · '+fmtDate(w.decided)+'</span><span class="btns">'
+        +'<button class="del-btn" data-act="want-del">删除</button></span></div>';
+    }
+    return '<div class="item" data-id="'+w.id+'"'+statusAttr+'>'
+      +'<div class="item-top"><button class="item-name" data-act="want-rename">'+esc(w.name)+'</button>'
+      +'<button class="chip" data-act="want-amt" title="点击改价格">¥'+(w.price||0)+'</button></div>'
+      +mid+bottom+'</div>';
+  }).join('');
+}
+function renderAll(){updateStats();renderCurrent();}
+
+let toastTimer;
+function toast(msg){
+  const t=$('#toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  currentTab=b.dataset.tab;
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('show',s.id==='tab-'+currentTab));
+  renderCurrent();
+}));
+
+$('#chips').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  currentFilter=b.dataset.f;renderItems();
+});
+
+$('#item-list').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-act]');if(!btn)return;
+  const card=e.target.closest('.item');const it=state.items.find(x=>x.id===card.dataset.id);
+  if(!it)return;
+  const act=btn.dataset.act;
+  if(act==='wear'){it.wear++;it.lastWorn=todayStr();save();renderItems();toast('已记录：'+it.name);}
+  else if(act==='del'){if(confirm('删除「'+it.name+'」？')){state.items=state.items.filter(x=>x.id!==it.id);save();renderItems();toast('已删除');}}
+  else if(act==='feel'){it.feeling=btn.dataset.val;save();renderItems();}
+  else if(act==='pickphoto'){pickPhoto(it.id);}
+  else if(act==='viewphoto'){openViewer(it.id);}
+  else if(act==='rmphoto'){removePhoto(it.id,true);}
+  else if(act==='rename'){
+    const input=document.createElement('input');
+    input.className='rename';input.value=it.name;
+    btn.replaceWith(input);input.focus();input.select();
+    let doneFlag=false;
+    const commit=()=>{if(doneFlag)return;doneFlag=true;const v=input.value.trim();if(v)it.name=v;save();renderItems();};
+    input.addEventListener('blur',commit);
+    input.addEventListener('keydown',ev=>{if(ev.key==='Enter')input.blur();});
+  }
+});
+$('#item-list').addEventListener('change',e=>{
+  if(!e.target.matches('select[data-act="status"]'))return;
+  const card=e.target.closest('.item');const it=state.items.find(x=>x.id===card.dataset.id);
+  if(!it)return;
+  it.status=e.target.value;save();renderItems();
+});
+
+$('#add-form').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=$('#add-name').value.trim();if(!name)return;
+  const cat=$('#add-cat').value,feel=$('#add-feel').value;
+  state.items.unshift(newItem({name,cat,feeling:feel}));
+  if(currentFilter!=='all'&&currentFilter!==cat)currentFilter=cat;
+  save();$('#add-name').value='';renderItems();toast('已添加：'+name);
+});
+
+$('#goal-list').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-act]');if(!btn)return;
+  const id=e.target.closest('.goal').dataset.id;
+  const act=btn.dataset.act;
+  if(act==='goal-toggle'){
+    state.goal.checks[id]=!state.goal.checks[id];save();renderGoals();
+  }else if(act==='goal-del'){
+    const g=state.goals.find(x=>x.id===id);
+    if(g&&confirm('删除目标「'+g.title+'」？')){
+      state.goals=state.goals.filter(x=>x.id!==id);delete state.goal.checks[id];save();renderGoals();toast('已删除目标');
+    }
+  }else if(act==='goal-rename'||act==='goal-desc'){
+    const g=state.goals.find(x=>x.id===id);if(!g)return;
+    const input=document.createElement('input');input.className='rename';
+    input.value=act==='goal-rename'?g.title:g.desc;
+    btn.replaceWith(input);input.focus();input.select();
+    let doneFlag=false;
+    const commit=()=>{if(doneFlag)return;doneFlag=true;const v=input.value.trim();
+      if(v){if(act==='goal-rename')g.title=v;else g.desc=v;}
+      save();renderGoals();};
+    input.addEventListener('blur',commit);
+    input.addEventListener('keydown',ev=>{if(ev.key==='Enter')input.blur();});
+  }
+});
+$('#goal-add').addEventListener('submit',e=>{
+  e.preventDefault();
+  const t=$('#goal-title').value.trim();if(!t)return;
+  state.goals.push({id:uid(),title:t,desc:$('#goal-desc').value.trim()||'（点这里补充说明）'});
+  save();$('#goal-title').value='';$('#goal-desc').value='';
+  renderGoals();toast('已添加目标');
+});
+$('#note-add').addEventListener('submit',e=>{
+  e.preventDefault();
+  const t=$('#note-text').value.trim();if(!t)return;
+  state.notes.unshift({id:uid(),text:t,date:fmtDate(todayStr())});
+  save();$('#note-text').value='';
+  renderNotes();toast('已记录');
+});
+$('#notes-list').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-act]');if(!btn)return;
+  const id=e.target.closest('.note').dataset.id;
+  if(btn.dataset.act==='note-del'){
+    if(confirm('删除这条笔记？')){
+      state.notes=state.notes.filter(x=>x.id!==id);save();renderNotes();toast('已删除');
+    }
+  }else if(btn.dataset.act==='note-edit'){
+    const n=state.notes.find(x=>x.id===id);if(!n)return;
+    const input=document.createElement('input');input.className='rename';input.value=n.text;
+    btn.replaceWith(input);input.focus();input.select();
+    let doneFlag=false;
+    const commit=()=>{if(doneFlag)return;doneFlag=true;const v=input.value.trim();if(v)n.text=v;save();renderNotes();};
+    input.addEventListener('blur',commit);
+    input.addEventListener('keydown',ev=>{if(ev.key==='Enter')input.blur();});
+  }
+});
+
+/* ===== 数字极简：交互 ===== */
+function digitalInlineEdit(el,value,onCommit,render){
+  const input=document.createElement('input');input.className='rename';input.value=value;
+  el.replaceWith(input);input.focus();input.select();
+  let doneFlag=false;
+  const commit=()=>{if(doneFlag)return;doneFlag=true;onCommit(input.value.trim());save();(render||renderDigital)();};
+  input.addEventListener('blur',commit);
+  input.addEventListener('keydown',ev=>{if(ev.key==='Enter')input.blur();});
+}
+$('#app-list').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-act]');if(!btn)return;
+  const card=e.target.closest('.item');const a=state.apps.find(x=>x.id===card.dataset.id);
+  if(!a)return;
+  const act=btn.dataset.act;
+  if(act==='app-open'){a.lastOpened=todayStr();save();renderApps();toast('已记录：'+a.name);}
+  else if(act==='app-del'){if(confirm('删除 App 记录「'+a.name+'」？')){state.apps=state.apps.filter(x=>x.id!==a.id);save();renderApps();}}
+  else if(act==='app-tag'){a.tag=btn.dataset.val;save();renderApps();}
+  else if(act==='app-rename'){digitalInlineEdit(btn,a.name,v=>{if(v)a.name=v;});}
+});
+$('#app-add').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=$('#app-name').value.trim();if(!name)return;
+  state.apps.push(newApp({name,tag:$('#app-tag').value}));
+  save();$('#app-name').value='';renderApps();toast('已添加：'+name);
+});
+$('#sub-list').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-act]');if(!btn)return;
+  const card=e.target.closest('.item');const s=state.subs.find(x=>x.id===card.dataset.id);
+  if(!s)return;
+  const act=btn.dataset.act;
+  if(act==='sub-used'){s.lastUsed=todayStr();save();renderSubs();toast('已记录：'+s.name);}
+  else if(act==='sub-del'){if(confirm('删除订阅「'+s.name+'」？')){state.subs=state.subs.filter(x=>x.id!==s.id);save();renderSubs();}}
+  else if(act==='sub-rename'){digitalInlineEdit(btn,s.name,v=>{if(v)s.name=v;});}
+  else if(act==='sub-amt'){digitalInlineEdit(btn,s.amount,v=>{const n=parseFloat(v);if(!isNaN(n)&&n>=0)s.amount=n;});}
+});
+$('#sub-add').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=$('#sub-name').value.trim();if(!name)return;
+  state.subs.push(newSub({name,amount:parseFloat($('#sub-amount').value)||0,cycle:$('#sub-cycle').value}));
+  save();$('#sub-name').value='';$('#sub-amount').value='';
+  renderSubs();toast('已添加：'+name);
+});
+$('#week-list').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-act="week-del"]');if(!btn)return;
+  const id=e.target.closest('.item').dataset.id;
+  if(confirm('删除这条周记录？')){
+    state.weekly=state.weekly.filter(x=>x.id!==id);save();renderWeekly();
+  }
+});
+$('#week-add').addEventListener('submit',e=>{
+  e.preventDefault();
+  const date=$('#week-date').value||todayStr();
+  const screen=parseFloat($('#week-screen').value)||0;
+  const wechat=parseFloat($('#week-wechat').value)||0;
+  const photos=parseInt($('#week-photos').value,10)||0;
+  if(!screen&&!wechat&&!photos){toast('三个数至少填一个');return;}
+  state.weekly.unshift({id:uid(),date,screen,wechat,photos});
+  save();$('#week-screen').value='';$('#week-wechat').value='';$('#week-photos').value='';
+  renderWeekly();toast('已记录本周');
+});
+
+/* ===== 金钱记账：交互 ===== */
+$('#want-list').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-act]');if(!btn)return;
+  const card=e.target.closest('.item');const w=state.wants.find(x=>x.id===card.dataset.id);
+  if(!w)return;
+  const act=btn.dataset.act;
+  if(act==='want-buy'){w.status='bought';w.decided=todayStr();save();renderWants();toast('已记入本月支出 ¥'+(w.price||0)+'。旧的那件退役了吗？');}
+  else if(act==='want-giveup'){w.status='gaveup';w.decided=todayStr();save();renderWants();toast('省下 ¥'+(w.price||0)+'，赞');}
+  else if(act==='want-del'){if(confirm('删除这条「'+w.name+'」？')){state.wants=state.wants.filter(x=>x.id!==w.id);save();renderWants();}}
+  else if(act==='want-rename'){digitalInlineEdit(btn,w.name,v=>{if(v)w.name=v;},renderWants);}
+  else if(act==='want-amt'){digitalInlineEdit(btn,w.price,v=>{const n=parseFloat(v);if(!isNaN(n)&&n>=0)w.price=n;},renderWants);}
+});
+$('#want-add').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=$('#want-name').value.trim();if(!name)return;
+  const price=parseFloat($('#want-price').value)||0;
+  const status=$('#want-mode').value;
+  state.wants.push({id:uid(),name,price,date:todayStr(),status,decided:status==='bought'?todayStr():null});
+  save();$('#want-name').value='';$('#want-price').value='';
+  renderWants();
+  toast(status==='bought'?'已记入本月支出':'已加入冷静期，30 天后再看');
+});
+
+$('#insight-list').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-act]');if(!btn)return;
+  const act=btn.dataset.act;
+  const key=btn.dataset.key;
+  if(act==='ins-hide'){
+    const id=btn.dataset.id;
+    const arr=state.insight.hidden[key];
+    if(!arr.includes(id)){arr.push(id);save();renderInsight();toast('已移出本组（物品本身没删）');}
+  }else if(act==='ins-reset'){
+    state.insight.hidden[key]=[];
+    state.insight.extra[key]=[];
+    state.insight.titles[key]=INSIGHT_DEF[key].title;
+    state.insight.hints[key]=INSIGHT_DEF[key].hint;
+    save();renderInsight();toast('已重置这张卡');
+  }else if(act==='ins-del-extra'){
+    const id=btn.dataset.id;
+    state.insight.extra[key]=state.insight.extra[key].filter(x=>x.id!==id);
+    save();renderInsight();
+  }else if(act==='ins-add'){
+    const input=document.createElement('input');
+    input.className='rename';input.placeholder='条目名称，回车保存';
+    btn.replaceWith(input);input.focus();input.select();
+    let doneFlag=false;
+    const commit=()=>{
+      if(doneFlag)return;doneFlag=true;
+      const v=input.value.trim();
+      if(v){state.insight.extra[key].push({id:uid(),name:v});save();toast('已添加');}
+      renderInsight();
+    };
+    input.addEventListener('blur',commit);
+    input.addEventListener('keydown',ev=>{if(ev.key==='Enter')input.blur();});
+  }else if(act==='ins-title'||act==='ins-hint'){
+    const isTitle=(act==='ins-title');
+    const input=document.createElement('input');
+    input.className='rename';input.value=isTitle?state.insight.titles[key]:state.insight.hints[key];
+    btn.replaceWith(input);input.focus();input.select();
+    let doneFlag=false;
+    const commit=()=>{
+      if(doneFlag)return;doneFlag=true;
+      const v=input.value.trim();
+      if(isTitle){if(v)state.insight.titles[key]=v;}
+      else{state.insight.hints[key]=v;}
+      save();renderInsight();
+    };
+    input.addEventListener('blur',commit);
+    input.addEventListener('keydown',ev=>{if(ev.key==='Enter')input.blur();});
+  }
+});
+$('#insight-list').parentElement.addEventListener('click',e=>{
+  const b=e.target.closest('[data-data]');if(!b)return;
+  const act=b.dataset.data;
+  if(act==='export'){
+    const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='极简清单备份-'+todayStr()+'.json';
+    document.body.appendChild(a);a.click();a.remove();
+    toast('已导出备份文件');
+  }else if(act==='import'){
+    $('#import-file').click();
+  }else if(act==='season'){
+    if(confirm('把所有物品的穿着计数清零，开始新一季统计？（建议每季度末做一次）')){
+      state.items.forEach(i=>{i.wear=0;i.lastWorn=null;});save();renderCurrent();toast('已清零，新一季开始记录');
+    }
+  }else if(act==='reset'){
+    if(confirm('恢复默认清单？当前所有记录会被覆盖（建议先导出备份）')){state=defaults();save();renderAll();toast('已恢复默认');}
+  }
+});
+$('#import-file').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const s=JSON.parse(r.result);
+      if(!s||!Array.isArray(s.items))throw new Error('bad');
+      state=s;migrate();save();renderAll();toast('导入成功');
+    }catch(err){toast('导入失败：文件格式不对');}
+  };
+  r.readAsText(f);e.target.value='';
+});
+
+$('#viewer').addEventListener('click',e=>{
+  const b=e.target.closest('[data-v]');
+  const id=$('#viewer').dataset.id;
+  if(b){
+    const v=b.dataset.v;
+    if(v==='close')closeViewer();
+    else if(v==='del')removePhoto(id,true);
+    else if(v==='replace')pickPhoto(id);
+    return;
+  }
+  if(e.target.id==='viewer')closeViewer();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeViewer();});
+
+migrate();save();renderAll();
+$('#week-date').value=todayStr();
+
+if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+  navigator.serviceWorker.register('./sw.js').catch(function(){});
+}
+</script>
+</body>
+</html>
