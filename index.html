@@ -1078,6 +1078,11 @@ $('#week-date').value=todayStr();
 
 if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
   navigator.serviceWorker.register('./sw.js').catch(function(){});
+  // 有新版本接管控制权时自动刷新一次（首次注册不刷新）
+  var hadController=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(hadController&&!window.__swReloaded){window.__swReloaded=true;location.reload();}
+  });
 }
 </script>
 </body>
